@@ -15,44 +15,23 @@ node('nodes'){
     ])
   ])
  
- def mavenHome = tool name:"maven3.6.2"
- 
- stage('Checkout'){
- git branch: 'development', credentialsId: 'e14ded32-a4da-421c-99b2-9f417175e8b3', url: 'https://github.com/MithunTechnologiesDevOps/maven-web-application.git'   
- }
- 
- /*
- stage('Build')
- {
-  sh "${mavenHome}/bin/mvn clean package"
- }
- 
-  stage('SonarQubeReport')
- {
-  sh "${mavenHome}/bin/mvn sonar:sonar"
- }
- 
-  stage('UploadArtifactintoNexus')
-  {
-   sh "${mavenHome}/bin/mvn deploy"
-  } 
- 
- stage('DeployAppintoTomcat')
- {
- sshagent(['c515e20b-3ee9-460d-9364-6556cc226b40']) {
-  sh  "scp -o StrictHostKeyChecking=no target/maven-web-application.war ec2-user@13.126.84.105:/opt/apache-tomcat-9.0.27/webapps/maven-web-application.war"
- }
- }
- */
- 
- stage('SendEmailNotification')
- {
- 
- emailext body: '''Build is over
+    def mavenhome= tool name: 'maven.3.8.6', type: 'maven' 
+    buildName 'dev-env_${BUILD_NUMBER}'
+    properties([buildDiscarder(logRotator(artifactDaysToKeepStr: '', artifactNumToKeepStr: '', daysToKeepStr: '1', numToKeepStr: '3')), [$class: 'RebuildSettings', autoRebuild: false, rebuildDisabled: false], [$class: 'JobLocalConfiguration', changeReasonComment: '']])
+    stage('getting code from the github'){
+        git 'https://github.com/Manohar4888/maven-web-application.git'
+    }
 
- Regards,
- Mithun Technologies,
- 9980923226''', subject: 'Buid is over', to: 'devopstrainingblr@gmail.com'
- }
+    stage('build using maven'){
+        sh "${mavenhome}/bin/mvn clean package"
+    }
     
+    stage('sonarqubereport'){
+        sh "${mavenhome}/bin/mvn sonar:sonar"
+    }
+    stage('deploy to tomcat'){
+    sshagent(['ssh-agent-2']) {
+   sh "scp -o StrictHostkeyChecking=no target/maven-web-application.war  ec2-user@13.235.104.91:/opt/apache-tomcat-9.0.65/webapps/"
+    }
+}
 }
