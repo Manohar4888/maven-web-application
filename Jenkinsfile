@@ -14,7 +14,6 @@ node{
         pollSCM('* * * * *')
     ])
   ])
- 
     def mavenhome= tool name: 'maven.3.8.6', type: 'maven' 
     buildName 'dev-env_${BUILD_NUMBER}'
     properties([buildDiscarder(logRotator(artifactDaysToKeepStr: '', artifactNumToKeepStr: '', daysToKeepStr: '1', numToKeepStr: '3')), [$class: 'RebuildSettings', autoRebuild: false, rebuildDisabled: false], [$class: 'JobLocalConfiguration', changeReasonComment: '']])
@@ -30,8 +29,7 @@ node{
         sh "${mavenhome}/bin/mvn sonar:sonar"
     }
     stage('deploy to tomcat'){
-    sshagent(['ssh-agent-2']) {
-   sh "scp -o StrictHostkeyChecking=no target/maven-web-application.war  ec2-user@13.235.104.91:/opt/apache-tomcat-9.0.65/webapps/"
-    }
+        deploy adapters: [tomcat9(credentialsId: 'tomcat-credentials', path: '', url: 'http://13.235.104.91:8080/')], contextPath: null, war: '**/*.war'
+    
 }
 }
